@@ -19,7 +19,6 @@ const otpSchema = new mongoose.Schema(
 );
 
 otpSchema.pre("save", async function (next) {
-  // Prevent re-hashing
   if (!this.isModified("otp")) return next();
 
   const saltRounds = 10;

@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 8,
-      select: false // 🔥 never expose password hash
+      select: false // never expose password hash
     },
     role: {
       type: String,
