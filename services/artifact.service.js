@@ -1,8 +1,6 @@
 import Artifact from "../models/artifact.js";
 
-/**
- * Create a new artifact
- */
+// Create a new artifact
 export const createArtifactService = async ({
   title,
   content,
@@ -21,20 +19,12 @@ export const createArtifactService = async ({
   return artifact;
 };
 
-
-
-
-
-
-
-
-
 export const getArtifactsService = async ({ userId, role }) => {
   if (role === "ADMIN") {
-    // Admin sees everything
+    // Admin can see all artifacts
     return await Artifact.find().populate("author", "name email role");
   }
 
-  // Non-admin sees only their own artifacts
+  // Non-admin can see only their own artifacts
   return await Artifact.find({ author: userId });
 };

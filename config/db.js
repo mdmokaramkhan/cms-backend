@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const connectDB = async () => {
   try {
-    mongoose.set("runValidators", true); // 🔥 always validate updates
+    mongoose.set("runValidators", true);
 
     await mongoose.connect(process.env.MONGO_URI);
 

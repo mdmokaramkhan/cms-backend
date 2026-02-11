@@ -7,19 +7,16 @@ import jwt from "jsonwebtoken";
  * Initiate signup by generating OTP
  */
 export const initiateSignupService = async (email) => {
-  // Check if user already exists
+
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     throw new Error("User already exists");
   }
 
-  // Remove old OTPs
   await OTP.deleteMany({ email });
 
-  // Generate OTP
   const otp = generateOTP();
 
-  // Store OTP (hashed by pre-save middleware)
   await OTP.create({
     email,
     otp,
@@ -32,9 +29,7 @@ export const initiateSignupService = async (email) => {
   };
 };
 
-/**
- * Verify OTP and create user
- */
+// Verify OTP and create user
 export const verifySignupOtpService = async ({
   email,
   otp,
@@ -42,25 +37,21 @@ export const verifySignupOtpService = async ({
   password,
   role,
 }) => {
-  // Fetch OTP
   const otpRecord = await OTP.findOne({ email });
   if (!otpRecord) {
     throw new Error("OTP expired or not found");
   }
 
-  // Check expiry
   if (otpRecord.expiresAt < Date.now()) {
     await OTP.deleteOne({ email });
     throw new Error("OTP expired");
   }
 
-  // Verify OTP
   const isValidOtp = await bcrypt.compare(otp, otpRecord.otp);
   if (!isValidOtp) {
     throw new Error("Invalid OTP");
   }
 
-  // Create user (password hashed via pre-save middleware)
   const user = await User.create({
     name,
     email,
@@ -68,7 +59,6 @@ export const verifySignupOtpService = async ({
     role,
   });
 
-  // Destroy OTP (one-time use)
   await OTP.deleteOne({ email });
 
   return {
