@@ -7,6 +7,7 @@ import likes from "./routes/likes.routes.js";
 import comment from "./routes/comment.route.js";
 import cookieParser from "cookie-parser";
 import { scheduledFunction } from "./cron/testing.js";
+import webhooksRoutes from "./routes/webhooks.route.js";
 
 const app = express();
 
@@ -32,4 +33,6 @@ app.use("/auth",authRoutes);
 app.use("/artifacts", artifactRoutes);
 app.use("/likes", likes);
 app.use("/comments", comment);
+app.use("/webhooks", webhooksRoutes);
+
 export default app;
