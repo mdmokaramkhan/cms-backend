@@ -28,3 +28,10 @@ export const getArtifactsService = async ({ userId, role }) => {
   // Non-admin can see only their own artifacts
   return await Artifact.find({ author: userId });
 };
+
+export const updateDraftToArchieveService = async () => {
+  var currentDate = new Date().now();
+  var thirdyDayOld = new Date(currentDate.getDate() - 30);
+  const result = await Artifact.updateMany({ status: "draft", createdAt: { $lt: thirdyDayOld } }, { status: "archived" });
+  return result;
+}
