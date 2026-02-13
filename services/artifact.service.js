@@ -1,19 +1,38 @@
 import Artifact from "../models/artifact.js";
+import fs from "fs";
+import cloudinary from "../config/cloudinary.js";
 
 // Create a new artifact
 export const createArtifactService = async ({
   title,
   content,
-  userId
+  userId,
+  filePath
 }) => {
   if (!title || !content) {
     throw new Error("Title and content are required");
   }
 
+  let mediaUrl = null
+  if (filePath) {
+    const uploadResult = await cloudinary.uploader.upload(
+      filePath,
+      {
+        folder: "cms-artifacts"
+      }
+    );
+
+    mediaUrl = uploadResult.secure_url;
+
+    fs.unlinkSync(filePath); // Delete local file after upload
+  }
+  console.log("MEDIA URL BEFORE SAVE:", mediaUrl);
+
   const artifact = await Artifact.create({
     title,
     content,
-    author: userId
+    author: userId,
+    media: mediaUrl || null
   });
 
   return artifact;
