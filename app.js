@@ -5,6 +5,8 @@ import authRoutes from "./routes/auth.route.js";
 import artifactRoutes from "./routes/artifacts.route.js"
 import likes from "./routes/likes.routes.js";
 import comment from "./routes/comment.route.js";
+import userRoutes from "./routes/users.route.js";
+import chatRoutes from "./routes/chat.routes.js";
 import cookieParser from "cookie-parser";
 import { scheduledFunction } from "./cron/testing.js";
 import webhooksRoutes from "./routes/webhooks.route.js";
@@ -29,7 +31,9 @@ app.get("/", (req, res) => {
   });
 });
 
-app.use("/auth",authRoutes);
+app.use("/auth", authRoutes);
+app.use("/users", userRoutes);
+app.use("/chat", chatRoutes);
 app.use("/artifacts", artifactRoutes);
 app.use("/likes", likes);
 app.use("/comments", comment);

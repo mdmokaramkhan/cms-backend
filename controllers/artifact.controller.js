@@ -1,4 +1,4 @@
-import { createArtifactService ,getArtifactsService} from "../services/artifact.service.js";
+import { createArtifactService, getArtifactsService, getArtifactByIdWithDetailsService, getArtifactsWithDetailsService } from "../services/artifact.service.js";
 
 /**
  * POST /artifacts
@@ -39,6 +39,55 @@ export const getArtifacts = async (req, res) => {
     res.status(200).json({
       success: true,
       artifacts
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+/**
+ * GET /artifacts — get all artifacts with comments and like count (public, no auth)
+ */
+export const getArtifactsPublic = async (req, res) => {
+  try {
+    const { artifacts } = await getArtifactsWithDetailsService();
+
+    res.status(200).json({
+      success: true,
+      artifacts
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+/**
+ * GET /artifacts/:id — get single artifact with comments and like count for frontend
+ */
+export const getArtifactById = async (req, res) => {
+  try {
+    const result = await getArtifactByIdWithDetailsService({
+      artifactId: req.params.id,
+      userId: req.user.id,
+      role: req.user.role
+    });
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: "Artifact not found or access denied"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      ...result
     });
   } catch (error) {
     res.status(500).json({

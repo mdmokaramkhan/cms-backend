@@ -24,6 +24,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["ADMIN", "EDITOR", "VIEWER"],
       default: "VIEWER"
+    },
+    profilePicture: {
+      type: String,
+      default: ""
+    },
+    verified: {
+      type: Boolean,
+      default: false
     }
   },
   { timestamps: true }

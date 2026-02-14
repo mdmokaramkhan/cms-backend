@@ -17,6 +17,8 @@ export const initiateSignupService = async (email) => {
 
   const otp = generateOTP();
 
+  console.log('OTP: ' + otp);
+
   await OTP.create({
     email,
     otp,
@@ -64,7 +66,9 @@ export const verifySignupOtpService = async ({
   return {
     id: user._id,
     name: user.name,
-    email: user.email
+    email: user.email,
+    profilePicture: user.profilePicture,
+    verified: user.verified
   };
 };
 
@@ -100,7 +104,9 @@ export const loginService = async (email, password) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      profilePicture: user.profilePicture,
+      verified: user.verified
     }
   };
 };

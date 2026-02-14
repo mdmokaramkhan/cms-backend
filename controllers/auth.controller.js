@@ -69,52 +69,24 @@ import {
   };
   
   
-  // export const login = async (req, res) => {
-  //   try {
-  //     const { email, password } = req.body;
-  
-  //     if (!email || !password) {
-  //       return res.status(400).json({
-  //         success: false,
-  //         message: "Email and password required"
-  //       });
-  //     }
-  
-  //     const result = await loginService(email, password);
-      
-  
-  //     res.status(200).json({
-  //       success: true,
-  //       message: "Login successful",
-  //       ...result
-  //     });
-  //   } catch (error) {
-  //     res.status(401).json({
-  //       success: false,
-  //       message: error.message
-  //     });
-  //   }
-  // };
-  
-  
-  // //cookies version  
   export const login = async (req, res) => {
     try {
       const { email, password } = req.body;
   
-      const result = await loginService(email, password);
+      if (!email || !password) {
+        return res.status(400).json({
+          success: false,
+          message: "Email and password required"
+        });
+      }
   
-      res.cookie("token", result.token, {
-        httpOnly: true,
-        secure: false,
-        sameSite: "lax",
-        maxAge: 60 * 60 * 1000
-      });
+      const result = await loginService(email, password);
+      
   
       res.status(200).json({
         success: true,
         message: "Login successful",
-        user: result.user
+        ...result
       });
     } catch (error) {
       res.status(401).json({
@@ -123,6 +95,34 @@ import {
       });
     }
   };
+  
+  
+  // //cookies version  
+  // export const login = async (req, res) => {
+  //   try {
+  //     const { email, password } = req.body;
+  
+  //     const result = await loginService(email, password);
+  
+  //     res.cookie("token", result.token, {
+  //       httpOnly: true,
+  //       secure: false,
+  //       sameSite: "lax",
+  //       maxAge: 60 * 60 * 1000
+  //     });
+  
+  //     res.status(200).json({
+  //       success: true,
+  //       message: "Login successful",
+  //       user: result.user
+  //     });
+  //   } catch (error) {
+  //     res.status(401).json({
+  //       success: false,
+  //       message: error.message
+  //     });
+  //   }
+  // };
   
   
   

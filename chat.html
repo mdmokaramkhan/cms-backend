@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f0f12;
+      --bg-elevated: #18181c;
+      --bg-hover: #222228;
+      --border: #2a2a32;
+      --text: #e4e4e7;
+      --text-muted: #a1a1aa;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --success: #22c55e;
+      --error: #ef4444;
+      --sent: #6366f1;
+      --received: #3f3f46;
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 20px;
+      --space-xl: 24px;
+      --input-h: 40px;
+      --btn-h: 40px;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "DM Sans", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 300px;
+      flex-shrink: 0;
+      background: var(--bg-elevated);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: var(--space-lg) var(--space-xl);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .sidebar-header h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: var(--space-sm);
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: 0.8125rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .status-dot.connected { background: var(--success); }
+    .status-dot.authenticated { background: var(--accent); }
+
+    .status-detail {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: var(--space-xs);
+    }
+
+    /* Auth card */
+    .auth-card {
+      padding: var(--space-lg) var(--space-xl);
+      margin: var(--space-md);
+      margin-bottom: 0;
+      background: var(--bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .auth-card h3 {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: var(--space-md);
+    }
+
+    .user-info {
+      padding: var(--space-md);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      margin-bottom: var(--space-md);
+    }
+    .user-info.logged-in { background: rgba(99, 102, 241, 0.15); color: var(--accent); }
+    .user-info.logged-out { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+
+    .auth-card input {
+      width: 100%;
+      height: var(--input-h);
+      padding: 0 var(--space-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.875rem;
+    }
+    .auth-card input { margin-bottom: var(--space-sm); }
+    .auth-card input:last-of-type { margin-bottom: 0; }
+    .auth-card input::placeholder { color: var(--text-muted); }
+
+    .auth-card .btn-row {
+      display: flex;
+      gap: var(--space-sm);
+      margin-top: var(--space-md);
+    }
+    .auth-card .btn-row button {
+      flex: 1;
+      height: var(--btn-h);
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .auth-card .btn-row button.primary {
+      background: var(--accent);
+      color: white;
+    }
+    .auth-card .btn-row button.primary:hover { background: var(--accent-hover); }
+    .auth-card .btn-row button.secondary {
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+    .auth-card .btn-row button.secondary:hover { background: var(--border); }
+
+    /* Threads section */
+    .threads-section {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: var(--space-md) var(--space-xl);
+      padding-top: var(--space-lg);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-md);
+    }
+
+    .section-header h3 {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .btn-load {
+      height: 36px;
+      padding: 0 var(--space-md);
+      border: none;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: white;
+      font-family: inherit;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-load:hover { background: var(--accent-hover); }
+
+    .thread-list {
+      flex: 1;
+      overflow-y: auto;
+      margin: 0 calc(-1 * var(--space-sm));
+    }
+
+    .thread-item {
+      padding: var(--space-md);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background 0.15s;
+      margin-bottom: var(--space-xs);
+    }
+    .thread-item:hover { background: var(--bg-hover); }
+    .thread-item.active { background: rgba(99, 102, 241, 0.2); }
+
+    .thread-item .name { font-weight: 500; }
+    .thread-item .id { font-size: 0.6875rem; color: var(--text-muted); margin-top: 2px; }
+
+    .create-group {
+      padding-top: var(--space-md);
+      margin-top: var(--space-md);
+      border-top: 1px solid var(--border);
+    }
+
+    .create-group input {
+      width: 100%;
+      height: var(--input-h);
+      padding: 0 var(--space-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.8125rem;
+    }
+    .create-group input { margin-bottom: var(--space-sm); }
+    .create-group button {
+      width: 100%;
+      height: var(--btn-h);
+      margin-top: var(--space-sm);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.8125rem;
+      cursor: pointer;
+    }
+    .create-group button:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Main chat */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .chat-header {
+      padding: var(--space-md) var(--space-xl);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      flex-wrap: wrap;
+      min-height: 64px;
+    }
+
+    .chat-header .thread-title {
+      flex: 1;
+      min-width: 120px;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .chat-header .header-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+    }
+
+    .chat-header input {
+      width: 160px;
+      height: var(--input-h);
+      padding: 0 var(--space-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.8125rem;
+    }
+
+    .chat-header button {
+      height: var(--input-h);
+      padding: 0 var(--space-md);
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--bg-hover);
+      color: var(--text);
+    }
+    .chat-header button:hover { background: var(--border); }
+    .chat-header button.primary { background: var(--accent); color: white; }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-xl);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    .msg {
+      max-width: 75%;
+      padding: var(--space-md) var(--space-lg);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+    .msg.sent {
+      align-self: flex-end;
+      background: var(--sent);
+      color: white;
+    }
+    .msg.received {
+      align-self: flex-start;
+      background: var(--received);
+    }
+    .msg.typing { font-style: italic; color: var(--text-muted); }
+
+    .typing-indicator-bar {
+      min-height: 28px;
+      padding: 6px var(--space-xl);
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-elevated);
+    }
+    .typing-indicator-bar:empty { display: none; }
+    .typing-indicator-bar .dots {
+      display: inline-flex;
+      gap: 4px;
+    }
+    .typing-indicator-bar .dots span {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      animation: typing-bounce 0.6s ease-in-out infinite;
+    }
+    .typing-indicator-bar .dots span:nth-child(2) { animation-delay: 0.1s; }
+    .typing-indicator-bar .dots span:nth-child(3) { animation-delay: 0.2s; }
+    @keyframes typing-bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-4px); }
+    }
+    .msg.error { background: rgba(239, 68, 68, 0.2); color: var(--error); }
+    .msg.status { background: transparent; color: var(--text-muted); font-size: 0.8125rem; }
+
+    .msg .sender { font-size: 0.75rem; opacity: 0.85; margin-bottom: 4px; }
+
+    .chat-input-area {
+      padding: var(--space-lg) var(--space-xl);
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    .chat-input-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .chat-input-area input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      height: 44px;
+      padding: 0 var(--space-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+    .chat-input-area input[type="text"]::placeholder { color: var(--text-muted); }
+
+    .chat-input-area .btn-send {
+      height: 44px;
+      padding: 0 var(--space-xl);
+      border: none;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: white;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .chat-input-area .btn-send:hover { background: var(--accent-hover); }
+
+    .receiver-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+    .receiver-row input {
+      width: 140px;
+      height: 36px;
+      padding: 0 var(--space-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.8125rem;
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      text-align: center;
+      padding: var(--space-xl);
+    }
+
+    /* Events logger */
+    .events-logger {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      width: 380px;
+      max-height: 300px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px 10px 0 0;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      transition: max-height 0.2s ease;
+    }
+    .events-logger.collapsed {
+      max-height: 44px;
+    }
+    .events-logger.collapsed .events-logger-body,
+    .events-logger.collapsed .events-logger-actions { display: none; }
+    .events-logger-header {
+      height: 44px;
+      padding: 0 var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+    .events-logger-header:hover { background: var(--bg-hover); }
+    .events-logger-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-sm);
+      font-family: "SF Mono", Monaco, Consolas, monospace;
+      font-size: 0.6875rem;
+      line-height: 1.5;
+    }
+    .event-row {
+      padding: var(--space-sm) var(--space-md);
+      margin-bottom: var(--space-xs);
+      border-radius: 6px;
+      word-break: break-all;
+    }
+    .event-row.out { background: rgba(99, 102, 241, 0.12); border-left: 3px solid var(--accent); }
+    .event-row.in { background: rgba(34, 197, 94, 0.08); border-left: 3px solid var(--success); }
+    .event-row .time { color: var(--text-muted); margin-right: var(--space-sm); }
+    .event-row .dir { font-weight: 600; }
+    .event-row.out .dir { color: var(--accent); }
+    .event-row.in .dir { color: var(--success); }
+    .event-row .name { color: var(--text); }
+    .event-row .payload { color: var(--text-muted); font-size: 0.625rem; margin-top: 4px; }
+    .events-logger-actions {
+      padding: var(--space-sm) var(--space-md);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: var(--space-sm);
+    }
+    .events-logger-actions button {
+      height: 32px;
+      padding: 0 var(--space-md);
+      font-size: 0.75rem;
+      background: var(--bg-hover);
+      border: none;
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .events-logger-actions button:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>Chat</h1>
+        <div class="status-row">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Disconnected</span>
+        </div>
+        <div class="status-detail" id="statusDetail"></div>
+      </div>
+
+      <div class="auth-card">
+        <h3>Account</h3>
+        <div class="user-info logged-out" id="userInfo">Not logged in</div>
+        <input id="loginEmail" type="email" placeholder="Email" />
+        <input id="loginPassword" type="password" placeholder="Password" />
+        <div class="btn-row">
+          <button class="primary" onclick="login()">Login</button>
+          <button class="secondary" onclick="logout()">Logout</button>
+        </div>
+      </div>
+
+      <div class="threads-section">
+        <div class="section-header">
+          <h3>Conversations</h3>
+          <button class="btn-load" onclick="loadThreads()">Load</button>
+        </div>
+        <div class="thread-list" id="threadList"></div>
+        <div class="create-group">
+          <input id="newGroupName" placeholder="Group name" />
+          <input id="newGroupParticipants" placeholder="User IDs (comma-separated)" />
+          <button onclick="createGroup()">+ New group</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main chat -->
+    <main class="main">
+      <div class="chat-header">
+        <span class="thread-title" id="threadTitle">Select a conversation</span>
+        <div class="header-controls">
+          <input id="threadId" placeholder="Thread ID" />
+          <button onclick="joinThread()">Join</button>
+          <button onclick="leaveThread()">Leave</button>
+          <button class="primary" onclick="loadMessages()">Load</button>
+        </div>
+      </div>
+
+      <div class="messages" id="messages">
+        <div class="empty-state" id="emptyState">Select a thread or enter a Thread ID above, then load messages or start chatting.</div>
+      </div>
+
+      <div class="typing-indicator-bar" id="typingIndicatorBar"></div>
+
+      <div class="chat-input-area">
+        <div class="chat-input-row">
+          <input id="message" type="text" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage()" oninput="onMessageInput()" onblur="emitTypingStop()" />
+          <button class="btn-send" onclick="sendMessage()">Send</button>
+        </div>
+        <div class="receiver-row">
+          <span>1:1 chat:</span>
+          <input id="receiverId" placeholder="Receiver ID" />
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Events logger -->
+  <div class="events-logger" id="eventsLogger">
+    <div class="events-logger-header" onclick="toggleEventsLogger()">
+      <span>Socket events</span>
+      <span id="eventsLoggerCount">0</span>
+    </div>
+    <div class="events-logger-actions">
+      <button onclick="clearEventsLog()">Clear</button>
+    </div>
+    <div class="events-logger-body" id="eventsLogBody"></div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const API_BASE = "http://localhost:3000";
+    const SOCKET_URL = API_BASE;
+
+    let socket = null;
+    let eventsLogCount = 0;
+
+    function logSocketEvent(direction, event, payload) {
+      eventsLogCount++;
+      document.getElementById("eventsLoggerCount").textContent = eventsLogCount;
+      const body = document.getElementById("eventsLogBody");
+      const row = document.createElement("div");
+      row.className = "event-row " + (direction === "out" ? "out" : "in");
+      const time = new Date().toLocaleTimeString("en-GB", { hour12: false });
+      let payloadStr = "";
+      if (payload !== undefined && payload !== null) {
+        try {
+          payloadStr = typeof payload === "object" ? JSON.stringify(payload) : String(payload);
+          if (payloadStr.length > 200) payloadStr = payloadStr.slice(0, 200) + "...";
+        } catch (_) {}
+      }
+      row.innerHTML = `<span class="time">${time}</span><span class="dir">${direction === "out" ? "↑ emit" : "↓ on"}</span> <span class="name">${event}</span>${payloadStr ? `<div class="payload">${payloadStr.replace(/</g, "&lt;")}</div>` : ""}`;
+      body.appendChild(row);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    function toggleEventsLogger() {
+      document.getElementById("eventsLogger").classList.toggle("collapsed");
+    }
+
+    function clearEventsLog() {
+      eventsLogCount = 0;
+      document.getElementById("eventsLoggerCount").textContent = "0";
+      document.getElementById("eventsLogBody").innerHTML = "";
+    }
+    let token = localStorage.getItem("chat_token");
+    let user = JSON.parse(localStorage.getItem("chat_user") || "null");
+    let activeThreadId = null;
+
+    function getAuthHeaders() {
+      const h = { "Content-Type": "application/json" };
+      if (token) h["Authorization"] = `Bearer ${token}`;
+      return h;
+    }
+
+    function api(path, options = {}) {
+      const url = `${API_BASE}${path}`;
+      const headers = getAuthHeaders();
+      return fetch(url, { ...options, headers: { ...headers, ...options.headers } })
+        .then(r => r.json().then(data => ({ ok: r.ok, status: r.status, data })))
+        .then(({ ok, status, data }) => {
+          if (!ok) throw new Error(data?.message || `HTTP ${status}`);
+          return data;
+        });
+    }
+
+    function updateUserUI() {
+      const el = document.getElementById("userInfo");
+      if (user) {
+        el.textContent = `${user.name || user.email}`;
+        el.className = "user-info logged-in";
+      } else {
+        el.textContent = "Not logged in";
+        el.className = "user-info logged-out";
+      }
+    }
+
+    function updateStatus(connected, authenticated) {
+      const dot = document.getElementById("statusDot");
+      const text = document.getElementById("statusText");
+      dot.className = "status-dot" + (connected ? (authenticated ? " authenticated" : " connected") : "");
+      text.textContent = connected ? (authenticated ? "Connected" : "Connected (guest)") : "Disconnected";
+    }
+
+    async function login() {
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+      if (!email || !password) return alert("Email and password required");
+      try {
+        const data = await api("/auth/login", {
+          method: "POST",
+          body: JSON.stringify({ email, password })
+        });
+        token = data.token;
+        user = data.user;
+        localStorage.setItem("chat_token", token);
+        localStorage.setItem("chat_user", JSON.stringify(user));
+        updateUserUI();
+        reconnectSocket();
+        appendStatus("Logged in");
+      } catch (e) {
+        appendError(e.message);
+      }
+    }
+
+    function logout() {
+      token = null;
+      user = null;
+      localStorage.removeItem("chat_token");
+      localStorage.removeItem("chat_user");
+      updateUserUI();
+      reconnectSocket();
+      appendStatus("Logged out");
+    }
+
+    function initSocket() {
+      if (socket) socket.disconnect();
+      const opts = token ? { auth: { token: `Bearer ${token}` } } : {};
+      socket = io(SOCKET_URL, opts);
+
+      socket.onAny((event, ...args) => {
+        logSocketEvent("in", event, args.length ? args : null);
+      });
+
+      const origEmit = socket.emit.bind(socket);
+      socket.emit = function (event, ...args) {
+        logSocketEvent("out", event, args.length ? args : null);
+        return origEmit(event, ...args);
+      };
+
+      socket.on("connect", () => updateStatus(true, !!user));
+      socket.on("disconnect", () => updateStatus(false, false));
+      socket.on("connected", (data) => {
+        updateStatus(true, !!data.authenticated);
+        document.getElementById("statusDetail").textContent = data.socketId || "";
+        if (!data.authenticated && user) {
+          socket.emit("auth", user.id, (err) => { if (err) appendError(err.message); });
+        }
+      });
+
+      socket.on("message", appendMessage);
+      socket.on("message-sent", appendSent);
+      socket.on("user-typing", ({ threadId, userId }) => showTyping(threadId, userId, true));
+      socket.on("user-stopped-typing", ({ threadId, userId }) => showTyping(threadId, userId, false));
+      socket.on("socket-error", ({ message }) => appendError(message));
+    }
+
+    function reconnectSocket() { initSocket(); }
+
+    function joinThread() {
+      const threadId = document.getElementById("threadId").value;
+      if (!threadId) return alert("Enter Thread ID");
+      const payload = { threadId };
+      if (user) payload.userId = user.id;
+      socket.emit("join-thread", payload, (err) => {
+        if (err) appendError(err.message);
+        else { activeThreadId = threadId; document.getElementById("threadTitle").textContent = threadId; appendStatus("Joined"); }
+      });
+    }
+
+    function leaveThread() {
+      const threadId = document.getElementById("threadId").value;
+      if (threadId) socket.emit("leave-thread", { threadId });
+      activeThreadId = null;
+      document.getElementById("threadTitle").textContent = "Select a conversation";
+    }
+
+    async function loadThreads() {
+      if (!token) return alert("Login first");
+      try {
+        const data = await api("/chat/getChatByUser");
+        const threads = data.data || [];
+        const list = document.getElementById("threadList");
+        list.innerHTML = "";
+        threads.forEach(t => {
+          const div = document.createElement("div");
+          div.className = "thread-item" + (t._id === activeThreadId ? " active" : "");
+          div.innerHTML = `<div class="name">${t.name || "Direct"}</div><div class="id">${t._id}</div>`;
+          div.onclick = () => {
+            document.getElementById("threadId").value = t._id;
+            document.getElementById("threadTitle").textContent = t.name || t._id;
+            activeThreadId = t._id;
+            document.querySelectorAll(".thread-item").forEach(el => el.classList.remove("active"));
+            div.classList.add("active");
+            joinThread();
+          };
+          list.appendChild(div);
+        });
+        appendStatus(`${threads.length} threads`);
+      } catch (e) {
+        appendError(e.message);
+      }
+    }
+
+    async function loadMessages() {
+      const threadId = document.getElementById("threadId").value;
+      if (!threadId) return alert("Enter Thread ID");
+      if (!token) return alert("Login first");
+      try {
+        const data = await api(`/chat/getChatByThread?threadId=${threadId}`);
+        const chats = data.data || [];
+        clearEmptyState();
+        chats.forEach(c => {
+          const div = document.createElement("div");
+          div.className = "msg " + (String(c.sender?._id) === String(user?.id) ? "sent" : "received");
+          div.innerHTML = (c.sender ? `<span class="sender">${c.sender.name || "?"}</span><br/>` : "") + (c.message || "");
+          document.getElementById("messages").appendChild(div);
+        });
+        appendStatus(`${chats.length} messages loaded`);
+      } catch (e) {
+        appendError(e.message);
+      }
+    }
+
+    function clearEmptyState() {
+      const es = document.getElementById("emptyState");
+      if (es) es.remove();
+    }
+
+    async function createGroup() {
+      if (!token) return alert("Login first");
+      const name = document.getElementById("newGroupName").value || "";
+      const ids = document.getElementById("newGroupParticipants").value.split(",").map(s => s.trim()).filter(Boolean);
+      if (ids.length === 0) return alert("Enter at least one participant ID");
+      try {
+        const data = await api("/chat/threads/group", {
+          method: "POST",
+          body: JSON.stringify({ participantIds: ids, name })
+        });
+        appendStatus("Group created");
+        loadThreads();
+      } catch (e) {
+        appendError(e.message);
+      }
+    }
+
+    function sendMessage() {
+      if (!user) return alert("Login first");
+      const receiverId = document.getElementById("receiverId").value;
+      const threadId = document.getElementById("threadId").value;
+      const message = document.getElementById("message").value;
+      if (!message) return alert("Enter a message");
+
+      const payload = { message, senderId: user.id };
+      if (threadId) payload.threadId = threadId;
+      else if (receiverId) payload.receiverId = receiverId;
+      else return alert("Enter Thread ID or Receiver ID");
+
+      emitTypingStop();
+      socket.emit("send-message", payload, (err) => { if (err) appendError(err.message); });
+      document.getElementById("message").value = "";
+    }
+
+    function esc(s) {
+      if (s == null || s === undefined) return "";
+      const el = document.createElement("span");
+      el.textContent = String(s);
+      return el.innerHTML;
+    }
+
+    function appendMessage(data) {
+      clearEmptyState();
+      const div = document.createElement("div");
+      div.className = "msg received";
+      div.innerHTML = (data.sender ? `<span class="sender">${esc(data.sender.name) || "?"}</span><br/>` : "") + esc(data.message);
+      document.getElementById("messages").appendChild(div);
+    }
+
+    function appendSent(data) {
+      clearEmptyState();
+      const div = document.createElement("div");
+      div.className = "msg sent";
+      div.textContent = data?.message ?? "";
+      document.getElementById("messages").appendChild(div);
+    }
+
+    function appendError(text) {
+      clearEmptyState();
+      const div = document.createElement("div");
+      div.className = "msg error";
+      div.textContent = "Error: " + text;
+      document.getElementById("messages").appendChild(div);
+    }
+
+    function appendStatus(text) {
+      clearEmptyState();
+      const div = document.createElement("div");
+      div.className = "msg status";
+      div.textContent = "• " + text;
+      document.getElementById("messages").appendChild(div);
+    }
+
+    const typingByThread = {};
+    function showTyping(threadId, userId, isTyping) {
+      if (!threadId || !userId) return;
+      if (!typingByThread[threadId]) typingByThread[threadId] = new Set();
+      const set = typingByThread[threadId];
+      if (isTyping) {
+        set.add(userId);
+      } else {
+        set.delete(userId);
+        if (set.size === 0) delete typingByThread[threadId];
+      }
+      renderTypingBar();
+    }
+
+    function renderTypingBar() {
+      const bar = document.getElementById("typingIndicatorBar");
+      const threadId = document.getElementById("threadId").value || activeThreadId;
+      const users = threadId ? typingByThread[threadId] : null;
+      bar.innerHTML = "";
+      if (users && users.size > 0) {
+        const list = Array.from(users).map(uid => "User " + (uid.length > 8 ? uid.slice(-8) : uid)).join(", ");
+        bar.innerHTML = `<span class="dots"><span></span><span></span><span></span></span> <span>${esc(list)} ${users.size === 1 ? "is" : "are"} typing...</span>`;
+      }
+    }
+
+    let typingTimeout = null;
+    const TYPING_DEBOUNCE_MS = 400;
+    function onMessageInput() {
+      const threadId = document.getElementById("threadId").value;
+      if (!threadId || !user || !socket?.connected) return;
+      if (typingTimeout) clearTimeout(typingTimeout);
+      socket.emit("typing-start", { threadId, userId: user.id });
+      typingTimeout = setTimeout(emitTypingStop, TYPING_DEBOUNCE_MS + 2000);
+    }
+
+    function emitTypingStop() {
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+        typingTimeout = null;
+      }
+      const threadId = document.getElementById("threadId").value;
+      if (threadId && user && socket?.connected) {
+        socket.emit("typing-stop", { threadId, userId: user.id });
+      }
+    }
+
+    updateUserUI();
+    initSocket();
+  </script>
+</body>
+</html>
